@@ -105,7 +105,7 @@
   <div class="amount-row"><span>Paid through</span><b id="paidThrough">—</b></div>
 
   <button class="cta" id="payBtn">Pay next EMI</button>
-  <p class="note">Records to Google Sheets and it's copyright by <code>Md. Shohidul Islam</code></p>
+  <p class="note">Records to Google Sheets | Copyright by <code>Md. Shohidul Islam</code></p>
 </div>
 
 <div class="modal" id="paymentModal">
@@ -159,10 +159,10 @@
   document.getElementById('payBtn').addEventListener('click', () => {
     const today = new Date();
     // getMonth() === 8 মানে সেপ্টেম্বর মাস এবং getDate() <= 7 মানে ১-৭ তারিখ
-    if (today.getMonth() === 8 && today.getDate() >= 1 && today.getDate() <= 7) {
+    if (today.getMonth() === 8 && today.getDate() >= 1 && today.getDate() <= 11) {
       modal.classList.add('show');
     } else {
-      alert("it's open 1st week on the month");
+      alert("Lock! Open next month");
     }
   });
   function closeModal() { 

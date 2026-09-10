@@ -31,15 +31,16 @@
   .strip-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:34px 0 10px;}
   .strip-label span:last-child{font-family:'IBM Plex Mono', monospace;color:var(--text);}
   .strip{display:grid;grid-template-columns:repeat(12, 1fr);gap:4px;}
-  .cell{height:28px;border-radius:4px;background:var(--panel);border:1px solid var(--line);position:relative;}
-  .cell.paid{background:linear-gradient(180deg, #3ED686, var(--green));border-color:var(--green);}
-  .cell.current{border-color:var(--orange);box-shadow: inset 0 0 0 1px var(--orange);}
+  .cell{height:28px;border-radius:4px;background:var(--panel);border:1px solid var(--line);position:relative;transition:all 0.3s ease;}
+  .cell.paid{background:linear-gradient(180deg, #3ED686, var(--green));border-color:var(--green);animation: pulse 0.6s ease;}
+  .cell.current{border-color:var(--orange);box-shadow: inset 0 0 0 2px var(--orange);}
+  @keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.1);}100%{transform:scale(1);}}
   .months-labels{display:grid;grid-template-columns:repeat(12, 1fr);margin-top:6px;}
   .months-labels span{font-size:9px;color:var(--muted);text-align:center;font-family:'IBM Plex Mono', monospace;}
   .stats{display:flex;margin:40px 0 8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
   .stat{flex:1;padding:20px 4px;text-align:center;border-right:1px solid var(--line);}
   .stat:last-child{border-right:none;}
-  .stat .num{font-family:'Archivo', sans-serif;font-weight:800;font-size:30px;line-height:1;}
+  .stat .num{font-family:'Archivo', sans-serif;font-weight:800;font-size:30px;line-height:1;transition:all 0.3s ease;}
   .stat.paid .num{color:var(--green);}
   .stat.due .num{color:var(--amber);}
   .stat .lbl{margin-top:6px;font-size:11px;color:var(--muted);}
@@ -68,14 +69,21 @@
   .btn-primary{background:var(--orange);color:#161208;}
   .btn-secondary{background:var(--panel);color:var(--text);border:1px solid var(--line);}
   .btn-secondary:hover{background:var(--bg);}
+  .refresh-btn{position:fixed;top:20px;right:20px;background:var(--panel);border:1px solid var(--line);color:var(--text);width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;z-index:100;}
+  .refresh-btn:hover{background:var(--orange);color:#161208;transform:rotate(180deg);}
+  .refresh-btn.spinning{animation: spin 1s linear infinite;}
+  @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
   #toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%, 20px);background:var(--panel);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity 0.25s ease, transform 0.25s ease;pointer-events:none;z-index:2000;}
   #toast.show{opacity:1;transform:translate(-50%, 0);}
   .hidden{display:none !important;}
+  .loading{opacity:0.6;pointer-events:none;}
 </style>
 </head>
 <body>
 
-<div class="page">
+<button class="refresh-btn" id="refreshBtn" title="Refresh data" onclick="loadStatus()">⟳</button>
+
+<div class="page" id="pageContent">
   <div class="brand">
     <div class="device">Note 15 · 5G</div>
     <div class="right">
@@ -125,7 +133,7 @@
     <div class="stat due"><div class="num" id="dueNum">12</div><div class="lbl">Due EMI</div></div>
   </div>
 
-  <div class="amount-row"><span>Paid so far</span><b id="amountPaid">৳0</b></div>
+  <div class="amount-row"><span>Paid so far</span><b id="amountPaid">0</b></div>
   <div class="amount-row"><span>Paid through</span><b id="paidThrough">—</b></div>
 
   <button class="cta" id="payBtn">Pay next EMI</button>
@@ -165,10 +173,11 @@
 <div id="toast"></div>
 
 <script>
-  // ✅ YOUR WORKING WEBHOOK URL
-  const N8N_WEBHOOK_URL = "https://madam.app.n8n.cloud/webhook/pay-emi";
+  // ✅ WEBHOOK URLs
+  const N8N_PAY_URL = "https://madam.app.n8n.cloud/webhook/pay-emi";
+  const N8N_STATUS_URL = "https://madam.app.n8n.cloud/webhook-test/emi-status"; // You need to create this
+  
   const MONTHS = ["Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27","Jun'27","Jul'27"];
-  const MONTHS_MAP = {"Aug-26":0,"Sep-26":1,"Oct-26":2,"Nov-26":3,"Dec-26":4,"Jan-27":5,"Feb-27":6,"Mar-27":7,"Apr-27":8,"May-27":9,"Jun-27":10,"Jul-27":11};
 
   // Theme toggle
   document.getElementById('themeToggle').addEventListener('click', () => {
@@ -182,26 +191,25 @@
   function closeModal() { modal.classList.remove('show'); }
   modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
 
-  // Format month label
   function formatMonthLabel(raw) {
     if(!raw) return '—';
     const [name, yy] = raw.split('-');
     return name + ' 20' + yy;
   }
 
-  // Render the UI with current stats
   function render(paidEMI, totalPaidTaka, lastPaidMonth) {
     const totalEMI = 12;
     const dueEMI = totalEMI - paidEMI;
     
-    document.getElementById('paidNum').textContent = paidEMI;
-    document.getElementById('dueNum').textContent = dueEMI;
+    // Animate numbers
+    animateNumber('paidNum', parseInt(document.getElementById('paidNum').textContent), paidEMI);
+    animateNumber('dueNum', parseInt(document.getElementById('dueNum').textContent), dueEMI);
     document.getElementById('totalNum').textContent = totalEMI;
     document.getElementById('progressText').textContent = paidEMI + ' / ' + totalEMI + ' paid';
     document.getElementById('amountPaid').textContent = '৳' + Number(totalPaidTaka).toLocaleString();
     document.getElementById('paidThrough').textContent = formatMonthLabel(lastPaidMonth);
 
-    // Update month strip
+    // Update month strip with animation
     const strip = document.getElementById('strip');
     const labels = document.getElementById('monthsLabels');
     strip.innerHTML = ''; 
@@ -211,12 +219,10 @@
       const cell = document.createElement('div');
       cell.className = 'cell';
       
-      // Mark as paid if index < paidEMI count
       if (i < paidEMI) {
         cell.classList.add('paid');
       }
       
-      // Mark current month (next to pay)
       if (i === paidEMI && i < 12) {
         cell.classList.add('current');
       }
@@ -229,12 +235,66 @@
     });
   }
 
-  // Show toast notification
+  function animateNumber(elementId, start, end) {
+    const element = document.getElementById(elementId);
+    const duration = 500;
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + (end - start) * easeProgress);
+      element.textContent = current;
+      
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      }
+    }
+    
+    requestAnimationFrame(update);
+  }
+
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  // Load status from n8n
+  async function loadStatus() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const pageContent = document.getElementById('pageContent');
+    
+    refreshBtn.classList.add('spinning');
+    pageContent.classList.add('loading');
+    
+    try {
+      const response = await fetch(N8N_STATUS_URL, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const paidCount = data.paid || 0;
+        const totalTaka = data.totalTaka || (paidCount * 3084);
+        render(paidCount, totalTaka, data.last_month);
+        console.log('✅ Status loaded:', data);
+      } else {
+        console.warn('️ Status endpoint returned:', response.status);
+        // Fallback: try pay endpoint (might return current state)
+        render(0, 0, null);
+      }
+    } catch (error) {
+      console.error('❌ Error loading status:', error);
+      showToast('Could not refresh. Check connection.');
+      render(0, 0, null);
+    } finally {
+      refreshBtn.classList.remove('spinning');
+      pageContent.classList.remove('loading');
+    }
   }
 
   // Form submission
@@ -248,7 +308,7 @@
     submitBtn.disabled = true;
 
     try {
-      const response = await fetch(N8N_WEBHOOK_URL, {
+      const response = await fetch(N8N_PAY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ month, taka })
@@ -257,58 +317,37 @@
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const data = await response.json();
-      console.log("✅ n8n response:", data);
-      
-      // Update UI with real-time data from n8n
-      const paidCount = data.paid || 0;
-      const totalTaka = data.totalTaka || (paidCount * 3084);
-      const lastMonth = data.last_month || month;
-      
-      // Refresh the entire UI
-      render(paidCount, totalTaka, lastMonth);
+      console.log("✅ Payment recorded:", data);
       
       showToast('✓ Payment recorded successfully!');
       closeModal();
       
-      // Reload page after 1 second to ensure data sync
+      // Auto-refresh after 1.5 seconds
       setTimeout(() => {
-        location.reload();
+        loadStatus();
       }, 1500);
       
     } catch (error) {
       console.error("❌ Error:", error);
-      showToast('✗ Failed. Check console for details.');
+      showToast('✗ Failed. Check console.');
     } finally {
       submitBtn.textContent = 'Submit Payment';
       submitBtn.disabled = false;
     }
   });
 
-  // Initial render - fetch current status from n8n
-  async function loadInitialStatus() {
-    try {
-      const response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const paidCount = data.paid || 0;
-        const totalTaka = data.totalTaka || (paidCount * 3084);
-        render(paidCount, totalTaka, data.last_month);
-      } else {
-        // Default state
-        render(0, 0, null);
-      }
-    } catch (error) {
-      console.log("Using default state");
-      render(0, 0, null);
+  // Auto-refresh when page becomes visible
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      loadStatus();
     }
-  }
+  });
 
-  // Load initial status on page load
-  loadInitialStatus();
+  // Initial load
+  loadStatus();
+  
+  // Refresh every 10 seconds
+  setInterval(loadStatus, 10000);
 </script>
 </body>
 </html>

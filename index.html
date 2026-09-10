@@ -159,7 +159,7 @@
   document.getElementById('payBtn').addEventListener('click', () => {
     const today = new Date();
     // getMonth() === 8 মানে সেপ্টেম্বর মাস এবং getDate() <= 7 মানে ১-৭ তারিখ
-    if (today.getMonth() === 8 && today.getDate() >= 1 && today.getDate() <= 11) {
+    if (today.getMonth() === 8 && today.getDate() >= 1 && today.getDate() <= 7) {
       modal.classList.add('show');
     } else {
       alert("Lock! Open next month");

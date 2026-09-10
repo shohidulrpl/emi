@@ -146,7 +146,6 @@
 <div id="toast"></div>
 
 <script>
-  // 🔴 REPLACE WITH YOUR ACTUAL URLS
   const PAY_URL = "https://madam.app.n8n.cloud/webhook/pay-emi";
   const STATUS_URL = "https://madam.app.n8n.cloud/webhook/emi-status";
   const MONTHS = ["Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27","Jun'27","Jul'27"];
@@ -171,7 +170,7 @@
     document.getElementById('paidNum').textContent = paid;
     document.getElementById('dueNum').textContent = 12 - paid;
     document.getElementById('progressText').textContent = paid + ' / 12 paid';
-    document.getElementById('amountPaid').textContent = '৳' + Number(totalTaka).toLocaleString();
+    document.getElementById('amountPaid').textContent = '' + Number(totalTaka).toLocaleString();
     document.getElementById('paidThrough').textContent = formatMonth(lastMonth);
 
     const strip = document.getElementById('strip');
@@ -196,7 +195,7 @@
     setTimeout(() => t.classList.remove('show'), 3000);
   }
 
-  // ✅ FETCH REAL-TIME DATA FROM N8N
+  // ✅ THIS FETCHES REAL DATA FROM N8N
   async function loadStatus() {
     const btn = document.getElementById('refreshBtn');
     btn.classList.add('spinning');
@@ -205,23 +204,20 @@
       const res = await fetch(STATUS_URL, {cache: 'no-store'});
       if(res.ok) {
         const data = await res.json();
-        console.log('✅ Data from n8n:', data);
+        console.log('✅ Got data:', data);
         render(data.paid || 0, data.totalTaka || 0, data.last_month);
-        showToast('Data refreshed');
       } else {
-        console.error('❌ Status:', res.status);
+        console.error('Error:', res.status);
         render(0, 0, null);
       }
     } catch(err) {
-      console.error('❌ Error:', err);
-      showToast('Cannot connect to n8n');
+      console.error('Fetch error:', err);
       render(0, 0, null);
     }
     
     btn.classList.remove('spinning');
   }
 
-  // ✅ SUBMIT PAYMENT AND AUTO-REFRESH
   document.getElementById('emiForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const month = document.getElementById('monthSelect').value;
@@ -239,10 +235,10 @@
       });
       
       if(res.ok) {
-        showToast('✓ Payment recorded!');
+        showToast('✓ Payment saved! Refreshing...');
         closeModal();
-        // Auto-refresh after 1.5 seconds
-        setTimeout(loadStatus, 1500);
+        // Wait 2 seconds then reload data
+        setTimeout(loadStatus, 2000);
       } else {
         showToast('✗ Payment failed');
       }
@@ -255,16 +251,11 @@
     btn.disabled = false;
   });
 
+  // Load data when page opens
+  window.addEventListener('load', loadStatus);
+  
   // Auto-refresh every 10 seconds
   setInterval(loadStatus, 10000);
-  
-  // Refresh when page becomes visible
-  document.addEventListener('visibilitychange', () => {
-    if(!document.hidden) loadStatus();
-  });
-
-  // Initial load on page open
-  window.addEventListener('load', loadStatus);
 </script>
 </body>
 </html>

@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Xiaomi Note 15 5G — EMI Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#12141A;--panel:#1B1E26;--line:#2B2F3A;--orange:#FF6A13;--green:#39C97A;--amber:#F2B84B;--text:#F1F2F5;--muted:#8B92A3}
@@ -22,18 +21,16 @@
   .hero{position:relative;display:flex;justify-content:center;padding:18px 0 8px}
   .glow{position:absolute;width:280px;height:280px;top:6px;border-radius:50%;background:radial-gradient(circle, rgba(255,106,19,0.32), transparent 70%);filter:blur(6px)}
   .phone-wrap{position:relative;z-index:1;width:200px;height:340px}
-  .phone-photo{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 24px 30px rgba(0,0,0,0.35))}
-  .phone-photo.hidden{display:none}
+  .phone-photo{display:block;width:100%;height:100%;object-fit:contain}
   .headline{text-align:center;margin:26px 0 4px}
   .headline h1{font-family:'Archivo', sans-serif;font-weight:700;font-size:24px;margin:0}
   .headline p{margin:8px 0 0;font-size:14px;color:var(--muted)}
   .strip-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:34px 0 10px}
   .strip-label span:last-child{font-family:'IBM Plex Mono', monospace;color:var(--text)}
   .strip{display:grid;grid-template-columns:repeat(12, 1fr);gap:4px}
-  .cell{height:28px;border-radius:4px;background:var(--panel);border:1px solid var(--line)}
-  .cell.paid{background:linear-gradient(180deg, #3ED686, var(--green));border-color:var(--green);animation:pulse 0.6s}
+  .cell{height:28px;border-radius:4px;background:var(--panel);border:1px solid var(--line);transition:all 0.3s}
+  .cell.paid{background:linear-gradient(180deg, #3ED686, var(--green));border-color:var(--green)}
   .cell.current{border-color:var(--orange);box-shadow:inset 0 0 0 2px var(--orange)}
-  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
   .months-labels{display:grid;grid-template-columns:repeat(12, 1fr);margin-top:6px}
   .months-labels span{font-size:9px;color:var(--muted);text-align:center;font-family:'IBM Plex Mono', monospace}
   .stats{display:flex;margin:40px 0 8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -73,7 +70,7 @@
 </head>
 <body>
 
-<button class="refresh-btn" id="refreshBtn" title="Refresh" onclick="loadStatus()">⟳</button>
+<button class="refresh-btn" id="refreshBtn" onclick="loadStatus()">⟳</button>
 
 <div class="page">
   <div class="brand">
@@ -87,7 +84,7 @@
   <div class="hero">
     <div class="glow"></div>
     <div class="phone-wrap">
-      <img class="phone-photo" id="phonePhoto" src="https://www.nextpit.de/img/xiaomi-redmi-note-15-5g-vorderseite.webp" onerror="this.classList.add('hidden')">
+      <img class="phone-photo" id="phonePhoto" src="https://www.nextpit.de/img/xiaomi-redmi-note-15-5g-vorderseite.webp">
     </div>
   </div>
 
@@ -109,7 +106,7 @@
     <div class="stat due"><div class="num" id="dueNum">12</div><div class="lbl">Due EMI</div></div>
   </div>
 
-  <div class="amount-row"><span>Paid so far</span><b id="amountPaid">৳0</b></div>
+  <div class="amount-row"><span>Paid so far</span><b id="amountPaid">0</b></div>
   <div class="amount-row"><span>Paid through</span><b id="paidThrough">—</b></div>
 
   <button class="cta" id="payBtn">Pay next EMI</button>
@@ -149,6 +146,7 @@
 <div id="toast"></div>
 
 <script>
+  // 🔴 REPLACE WITH YOUR ACTUAL URLS
   const PAY_URL = "https://madam.app.n8n.cloud/webhook/pay-emi";
   const STATUS_URL = "https://madam.app.n8n.cloud/webhook/emi-status";
   const MONTHS = ["Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27","Jun'27","Jul'27"];
@@ -198,6 +196,7 @@
     setTimeout(() => t.classList.remove('show'), 3000);
   }
 
+  // ✅ FETCH REAL-TIME DATA FROM N8N
   async function loadStatus() {
     const btn = document.getElementById('refreshBtn');
     btn.classList.add('spinning');
@@ -206,18 +205,23 @@
       const res = await fetch(STATUS_URL, {cache: 'no-store'});
       if(res.ok) {
         const data = await res.json();
+        console.log('✅ Data from n8n:', data);
         render(data.paid || 0, data.totalTaka || 0, data.last_month);
+        showToast('Data refreshed');
       } else {
+        console.error('❌ Status:', res.status);
         render(0, 0, null);
       }
     } catch(err) {
-      console.error('Load error:', err);
+      console.error('❌ Error:', err);
+      showToast('Cannot connect to n8n');
       render(0, 0, null);
     }
     
     btn.classList.remove('spinning');
   }
 
+  // ✅ SUBMIT PAYMENT AND AUTO-REFRESH
   document.getElementById('emiForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const month = document.getElementById('monthSelect').value;
@@ -237,6 +241,7 @@
       if(res.ok) {
         showToast('✓ Payment recorded!');
         closeModal();
+        // Auto-refresh after 1.5 seconds
         setTimeout(loadStatus, 1500);
       } else {
         showToast('✗ Payment failed');
@@ -258,8 +263,8 @@
     if(!document.hidden) loadStatus();
   });
 
-  // Initial load
-  loadStatus();
+  // Initial load on page open
+  window.addEventListener('load', loadStatus);
 </script>
 </body>
 </html>

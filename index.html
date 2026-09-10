@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xiaomi Note 15 5G — EMI Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#12141A;--panel:#1B1E26;--line:#2B2F3A;--orange:#FF6A13;--green:#39C97A;--amber:#F2B84B;--text:#F1F2F5;--muted:#8B92A3;--shadow: 0 30px 60px -20px rgba(0,0,0,0.55);}
+  html[data-theme="light"]{--bg:#F5F4F1;--panel:#FFFFFF;--line:#E4E2DC;--orange:#E85D0A;--green:#1E9A5A;--amber:#B8791C;--text:#1B1C1F;--muted:#75757C;--shadow: 0 20px 40px -20px rgba(20,20,20,0.15);}
+  *{box-sizing:border-box;}html,body{margin:0;padding:0;}
+  body{background:radial-gradient(ellipse 900px 500px at 50% -10%, rgba(255,106,19,0.12), transparent 60%),var(--bg);color:var(--text);font-family:'IBM Plex Sans', sans-serif;min-height:100vh;display:flex;justify-content:center;padding:56px 20px 80px;transition:background 0.25s ease, color 0.25s ease;}
+  .page{width:100%;max-width:480px;}
+  .brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;}
+  .brand .device{font-family:'Archivo', sans-serif;font-weight:700;font-size:15px;letter-spacing:0.2px;color:var(--text);}
+  .brand .right{display:flex;align-items:center;gap:14px;}
+  .brand .tenor{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--muted);}
+  .theme-toggle{width:38px;height:22px;border-radius:999px;background:var(--panel);border:1px solid var(--line);position:relative;cursor:pointer;padding:0;flex-shrink:0;}
+  .theme-toggle .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--orange);transition:transform 0.2s ease;}
+  html[data-theme="light"] .theme-toggle .knob{transform:translateX(16px);}
+  .hero{position:relative;display:flex;justify-content:center;padding:18px 0 8px;}
+  .glow{position:absolute;width:280px;height:280px;top:6px;border-radius:50%;background:radial-gradient(circle, rgba(255,106,19,0.32), transparent 70%);filter:blur(6px);}
+  .phone-wrap{position:relative;z-index:1;width:200px;height:340px;}
+  .phone-wrap svg{display:block;width:168px;height:auto;margin:0 auto;}
+  .phone-photo{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 24px 30px rgba(0,0,0,0.35));}
+  .phone-photo.hidden{display:none;}
+  .headline{text-align:center;margin:26px 0 4px;}
+  .headline h1{font-family:'Archivo', sans-serif;font-weight:700;font-size:24px;line-height:1.15;margin:0;}
+  .headline p{margin:8px 0 0;font-size:14px;color:var(--muted);}
+  .strip-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:34px 0 10px;}
+  .strip-label span:last-child{font-family:'IBM Plex Mono', monospace;color:var(--text);}
+  .strip{display:grid;grid-template-columns:repeat(12, 1fr);gap:4px;}
+  .cell{height:28px;border-radius:4px;background:var(--panel);border:1px solid var(--line);position:relative;}
+  .cell.paid{background:linear-gradient(180deg, #3ED686, var(--green));border-color:var(--green);}
+  .cell.current{border-color:var(--orange);box-shadow: inset 0 0 0 1px var(--orange);}
+  .months-labels{display:grid;grid-template-columns:repeat(12, 1fr);margin-top:6px;}
+  .months-labels span{font-size:9px;color:var(--muted);text-align:center;font-family:'IBM Plex Mono', monospace;}
+  .stats{display:flex;margin:40px 0 8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .stat{flex:1;padding:20px 4px;text-align:center;border-right:1px solid var(--line);}
+  .stat:last-child{border-right:none;}
+  .stat .num{font-family:'Archivo', sans-serif;font-weight:800;font-size:30px;line-height:1;}
+  .stat.paid .num{color:var(--green);}
+  .stat.due .num{color:var(--amber);}
+  .stat .lbl{margin-top:6px;font-size:11px;color:var(--muted);}
+  .amount-row{display:flex;justify-content:space-between;align-items:baseline;padding:16px 2px 0;font-size:13px;color:var(--muted);}
+  .amount-row b{font-family:'IBM Plex Mono', monospace;color:var(--text);font-size:14px;}
+  .cta{display:block;width:100%;margin-top:34px;padding:16px 0;text-align:center;background:var(--orange);color:#161208;font-family:'Archivo', sans-serif;font-weight:700;font-size:15px;border:none;border-radius:8px;text-decoration:none;cursor:pointer;transition:transform 0.15s ease, background 0.15s ease;}
+  .cta:hover{background:#FF7B2E;transform:translateY(-1px);}
+  .cta:active{transform:translateY(0);}
+  .cta:disabled{background:var(--muted);cursor:not-allowed;transform:none;}
+  .note{margin-top:14px;text-align:center;font-size:11.5px;color:var(--muted);}
+  .note code{background:var(--panel);padding:1px 5px;border-radius:4px;font-family:'IBM Plex Mono', monospace;}
+  .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:1000;justify-content:center;align-items:center;padding:20px;}
+  .modal.show{display:flex;}
+  .modal-content{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px;width:100%;max-width:420px;box-shadow:var(--shadow);}
+  .modal-header{text-align:center;margin-bottom:28px;}
+  .modal-header h2{font-family:'Archivo', sans-serif;font-weight:700;font-size:22px;margin:0 0 6px;}
+  .modal-header p{margin:0;font-size:13px;color:var(--muted);}
+  .form-group{margin-bottom:22px;}
+  .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text);}
+  .form-group select,.form-group input{width:100%;padding:14px 16px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:'IBM Plex Sans', sans-serif;font-size:15px;outline:none;transition:border-color 0.2s ease;}
+  .form-group select:focus,.form-group input:focus{border-color:var(--orange);}
+  .modal-actions{display:flex;gap:12px;margin-top:28px;}
+  .btn{flex:1;padding:14px 20px;border:none;border-radius:8px;font-family:'Archivo', sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:transform 0.15s ease, opacity 0.15s ease;}
+  .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn-primary{background:var(--orange);color:#161208;}
+  .btn-secondary{background:var(--panel);color:var(--text);border:1px solid var(--line);}
+  .btn-secondary:hover{background:var(--bg);}
+  #toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%, 20px);background:var(--panel);border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity 0.25s ease, transform 0.25s ease;pointer-events:none;z-index:2000;}
+  #toast.show{opacity:1;transform:translate(-50%, 0);}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="brand">
+    <div class="device">Note 15 · 5G</div>
+    <div class="right">
+      <span class="tenor">EMI TRACKER</span>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"><span class="knob"></span></button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="glow"></div>
+    <div class="phone-wrap">
+      <img class="phone-photo" id="phonePhoto" alt="Xiaomi Redmi Note 15 5G" src="https://www.nextpit.de/img/xiaomi-redmi-note-15-5g-vorderseite.webp" onerror="this.classList.add('hidden'); document.getElementById('phoneIllustration').classList.remove('hidden');">
+      <svg id="phoneIllustration" class="hidden" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3A3E48"/><stop offset="100%" stop-color="#181A20"/></linearGradient>
+          <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2A2E38"/><stop offset="100%" stop-color="#0E0F13"/></linearGradient>
+          <linearGradient id="cam" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF8A3D"/><stop offset="100%" stop-color="#FF6A13"/></linearGradient>
+        </defs>
+        <rect x="6" y="4" width="188" height="392" rx="34" fill="url(#body)" stroke="#454A56" stroke-width="1.5"/>
+        <rect x="16" y="16" width="168" height="368" rx="24" fill="url(#screen)"/>
+        <rect x="70" y="24" width="60" height="10" rx="5" fill="#0E0F13"/>
+        <circle cx="70" cy="29" r="3" fill="#12151B"/>
+        <g><rect x="30" y="46" width="72" height="72" rx="16" fill="#20232C" stroke="#3A3E48"/><circle cx="52" cy="68" r="14" fill="url(#cam)"/><circle cx="52" cy="68" r="6" fill="#1A1C22"/><circle cx="80" cy="68" r="10" fill="#3A3E48"/><circle cx="80" cy="68" r="4" fill="#1A1C22"/><circle cx="52" cy="96" r="8" fill="#3A3E48"/><circle cx="52" cy="96" r="3.2" fill="#1A1C22"/></g>
+        <rect x="30" y="150" width="140" height="10" rx="5" fill="#242832"/>
+        <rect x="30" y="168" width="100" height="8" rx="4" fill="#1E212A"/>
+        <rect x="30" y="330" width="140" height="34" rx="10" fill="#1E212A" stroke="#2B2F3A"/>
+        <text x="100" y="352" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#8B92A3">XIAOMI</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="headline">
+    <h1>Xiaomi Note 15 5G</h1>
+    <p>Installment plan · August 2026 – July 2027</p>
+  </div>
+
+  <div class="strip-label">
+    <span>12-month plan</span>
+    <span id="progressText">0 / 12 paid</span>
+  </div>
+  <div class="strip" id="strip"></div>
+  <div class="months-labels" id="monthsLabels"></div>
+
+  <div class="stats">
+    <div class="stat total"><div class="num" id="totalNum">12</div><div class="lbl">Total EMI</div></div>
+    <div class="stat paid"><div class="num" id="paidNum">0</div><div class="lbl">Paid EMI</div></div>
+    <div class="stat due"><div class="num" id="dueNum">12</div><div class="lbl">Due EMI</div></div>
+  </div>
+
+  <div class="amount-row"><span>Paid so far</span><b id="amountPaid">৳0</b></div>
+  <div class="amount-row"><span>Paid through</span><b id="paidThrough">—</b></div>
+
+  <button class="cta" id="payBtn">Pay next EMI</button>
+  <p class="note">Records to Google Sheets via <code>n8n</code></p>
+</div>
+
+<div class="modal" id="paymentModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Record EMI Payment</h2>
+      <p>Update your payment status</p>
+    </div>
+    <form id="emiForm">
+      <div class="form-group">
+        <label for="monthSelect">Select Month</label>
+        <select id="monthSelect" required>
+          <option value="Aug-26">August 2026</option><option value="Sep-26">September 2026</option>
+          <option value="Oct-26">October 2026</option><option value="Nov-26">November 2026</option>
+          <option value="Dec-26">December 2026</option><option value="Jan-27">January 2027</option>
+          <option value="Feb-27">February 2027</option><option value="Mar-27">March 2027</option>
+          <option value="Apr-27">April 2027</option><option value="May-27">May 2027</option>
+          <option value="Jun-27">June 2027</option><option value="Jul-27">July 2027</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="takaInput">Taka (Amount)</label>
+        <input type="number" id="takaInput" value="3084" required min="1">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Submit Payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ✅ YOUR WORKING WEBHOOK URL
+  const N8N_WEBHOOK_URL = "https://madam.app.n8n.cloud/webhook/pay-emi";
+  const MONTHS = ["Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27","Jun'27","Jul'27"];
+  const MONTHS_MAP = {"Aug-26":0,"Sep-26":1,"Oct-26":2,"Nov-26":3,"Dec-26":4,"Jan-27":5,"Feb-27":6,"Mar-27":7,"Apr-27":8,"May-27":9,"Jun-27":10,"Jul-27":11};
+
+  // Theme toggle
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // Modal controls
+  const modal = document.getElementById('paymentModal');
+  document.getElementById('payBtn').addEventListener('click', () => modal.classList.add('show'));
+  function closeModal() { modal.classList.remove('show'); }
+  modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+
+  // Format month label
+  function formatMonthLabel(raw) {
+    if(!raw) return '—';
+    const [name, yy] = raw.split('-');
+    return name + ' 20' + yy;
+  }
+
+  // Render the UI with current stats
+  function render(paidEMI, totalPaidTaka, lastPaidMonth) {
+    const totalEMI = 12;
+    const dueEMI = totalEMI - paidEMI;
+    
+    document.getElementById('paidNum').textContent = paidEMI;
+    document.getElementById('dueNum').textContent = dueEMI;
+    document.getElementById('totalNum').textContent = totalEMI;
+    document.getElementById('progressText').textContent = paidEMI + ' / ' + totalEMI + ' paid';
+    document.getElementById('amountPaid').textContent = '৳' + Number(totalPaidTaka).toLocaleString();
+    document.getElementById('paidThrough').textContent = formatMonthLabel(lastPaidMonth);
+
+    // Update month strip
+    const strip = document.getElementById('strip');
+    const labels = document.getElementById('monthsLabels');
+    strip.innerHTML = ''; 
+    labels.innerHTML = '';
+    
+    MONTHS.forEach((m, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      
+      // Mark as paid if index < paidEMI count
+      if (i < paidEMI) {
+        cell.classList.add('paid');
+      }
+      
+      // Mark current month (next to pay)
+      if (i === paidEMI && i < 12) {
+        cell.classList.add('current');
+      }
+      
+      strip.appendChild(cell);
+      
+      const lbl = document.createElement('span');
+      lbl.textContent = m;
+      labels.appendChild(lbl);
+    });
+  }
+
+  // Show toast notification
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  // Form submission
+  document.getElementById('emiForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const month = document.getElementById('monthSelect').value;
+    const taka = document.getElementById('takaInput').value;
+    const submitBtn = document.getElementById('submitBtn');
+    
+    submitBtn.textContent = 'Processing...';
+    submitBtn.disabled = true;
+
+    try {
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month, taka })
+      });
+      
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      const data = await response.json();
+      console.log("✅ n8n response:", data);
+      
+      // Update UI with real-time data from n8n
+      const paidCount = data.paid || 0;
+      const totalTaka = data.totalTaka || (paidCount * 3084);
+      const lastMonth = data.last_month || month;
+      
+      // Refresh the entire UI
+      render(paidCount, totalTaka, lastMonth);
+      
+      showToast('✓ Payment recorded successfully!');
+      closeModal();
+      
+      // Reload page after 1 second to ensure data sync
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
+      
+    } catch (error) {
+      console.error("❌ Error:", error);
+      showToast('✗ Failed. Check console for details.');
+    } finally {
+      submitBtn.textContent = 'Submit Payment';
+      submitBtn.disabled = false;
+    }
+  });
+
+  // Initial render - fetch current status from n8n
+  async function loadInitialStatus() {
+    try {
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const paidCount = data.paid || 0;
+        const totalTaka = data.totalTaka || (paidCount * 3084);
+        render(paidCount, totalTaka, data.last_month);
+      } else {
+        // Default state
+        render(0, 0, null);
+      }
+    } catch (error) {
+      console.log("Using default state");
+      render(0, 0, null);
+    }
+  }
+
+  // Load initial status on page load
+  loadInitialStatus();
+</script>
+</body>
+</html>

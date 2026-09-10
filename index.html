@@ -60,17 +60,11 @@
   .btn{flex:1;padding:14px 20px;border:none;border-radius:8px;font-family:'Archivo', sans-serif;font-weight:700;font-size:15px;cursor:pointer}
   .btn-primary{background:var(--orange);color:#161208}
   .btn-secondary{background:var(--panel);color:var(--text);border:1px solid var(--line)}
-  .refresh-btn{position:fixed;top:20px;right:20px;background:var(--panel);border:1px solid var(--line);color:var(--text);width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;z-index:100;transition:transform 0.3s}
-  .refresh-btn:hover{transform:rotate(180deg);background:var(--orange);color:#161208}
-  .refresh-btn.spinning{animation:spin 1s linear infinite}
-  @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
   #toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%, 20px);background:var(--panel);border:1px solid var(--line);padding:12px 18px;border-radius:8px;font-size:13px;opacity:0;transition:all 0.25s;pointer-events:none;z-index:2000}
   #toast.show{opacity:1;transform:translate(-50%, 0)}
 </style>
 </head>
 <body>
-
-<button class="refresh-btn" id="refreshBtn" onclick="loadStatus()">⟳</button>
 
 <div class="page">
   <div class="brand">
@@ -106,7 +100,7 @@
     <div class="stat due"><div class="num" id="dueNum">12</div><div class="lbl">Due EMI</div></div>
   </div>
 
-  <div class="amount-row"><span>Paid so far</span><b id="amountPaid">0</b></div>
+  <div class="amount-row"><span>Paid so far</span><b id="amountPaid">৳0</b></div>
   <div class="amount-row"><span>Paid through</span><b id="paidThrough">—</b></div>
 
   <button class="cta" id="payBtn">Pay next EMI</button>
@@ -137,7 +131,7 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Submit Payment</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Submit Payment</button>
       </div>
     </form>
   </div>
@@ -146,8 +140,8 @@
 <div id="toast"></div>
 
 <script>
+  // ✅ PRODUCTION URL (Because workflow is Active)
   const PAY_URL = "https://madam.app.n8n.cloud/webhook/pay-emi";
-  const STATUS_URL = "https://madam.app.n8n.cloud/webhook/emi-status";
   const MONTHS = ["Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27","Jun'27","Jul'27"];
 
   document.getElementById('themeToggle').addEventListener('click', () => {
@@ -170,7 +164,7 @@
     document.getElementById('paidNum').textContent = paid;
     document.getElementById('dueNum').textContent = 12 - paid;
     document.getElementById('progressText').textContent = paid + ' / 12 paid';
-    document.getElementById('amountPaid').textContent = '' + Number(totalTaka).toLocaleString();
+    document.getElementById('amountPaid').textContent = '৳' + Number(totalTaka).toLocaleString();
     document.getElementById('paidThrough').textContent = formatMonth(lastMonth);
 
     const strip = document.getElementById('strip');
@@ -195,39 +189,17 @@
     setTimeout(() => t.classList.remove('show'), 3000);
   }
 
-  // ✅ THIS FETCHES REAL DATA FROM N8N
-  async function loadStatus() {
-    const btn = document.getElementById('refreshBtn');
-    btn.classList.add('spinning');
-    
-    try {
-      const res = await fetch(STATUS_URL, {cache: 'no-store'});
-      if(res.ok) {
-        const data = await res.json();
-        console.log('✅ Got data:', data);
-        render(data.paid || 0, data.totalTaka || 0, data.last_month);
-      } else {
-        console.error('Error:', res.status);
-        render(0, 0, null);
-      }
-    } catch(err) {
-      console.error('Fetch error:', err);
-      render(0, 0, null);
-    }
-    
-    btn.classList.remove('spinning');
-  }
-
   document.getElementById('emiForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const month = document.getElementById('monthSelect').value;
     const taka = document.getElementById('takaInput').value;
-    const btn = this.querySelector('button[type="submit"]');
+    const btn = document.getElementById('submitBtn');
     
     btn.textContent = 'Processing...';
     btn.disabled = true;
 
     try {
+      // Send data to n8n and WAIT for the response
       const res = await fetch(PAY_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -235,27 +207,29 @@
       });
       
       if(res.ok) {
-        showToast('✓ Payment saved! Refreshing...');
+        // n8n will return the updated stats here!
+        const data = await res.json();
+        console.log('✅ Payment Success. Data from n8n:', data);
+        
+        // INSTANTLY UPDATE THE WEBSITE
+        render(data.paid || 0, data.totalTaka || 0, data.last_month);
+        
+        showToast('✓ Payment recorded successfully!');
         closeModal();
-        // Wait 2 seconds then reload data
-        setTimeout(loadStatus, 2000);
       } else {
-        showToast('✗ Payment failed');
+        showToast('✗ Payment failed. Check n8n logs.');
       }
     } catch(err) {
-      console.error(err);
-      showToast('✗ Network error');
+      console.error('Network Error:', err);
+      showToast('✗ Network error. Is n8n active?');
     }
     
     btn.textContent = 'Submit Payment';
     btn.disabled = false;
   });
 
-  // Load data when page opens
-  window.addEventListener('load', loadStatus);
-  
-  // Auto-refresh every 10 seconds
-  setInterval(loadStatus, 10000);
+  // Initial render (0 paid)
+  render(0, 0, null);
 </script>
 </body>
 </html>

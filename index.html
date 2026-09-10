@@ -60,6 +60,7 @@
   .btn{flex:1;padding:14px 20px;border:none;border-radius:8px;font-family:'Archivo', sans-serif;font-weight:700;font-size:15px;cursor:pointer}
   .btn-primary{background:var(--orange);color:#161208}
   .btn-secondary{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+  .error-detail{background:#2a1a1a;border:1px solid #ff4444;border-radius:8px;padding:12px;margin-top:12px;font-size:11px;color:#ff6b6b;font-family:'IBM Plex Mono',monospace;display:none}
   #toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%, 20px);background:var(--panel);border:1px solid var(--line);padding:12px 18px;border-radius:8px;font-size:13px;opacity:0;transition:all 0.25s;pointer-events:none;z-index:2000}
   #toast.show{opacity:1;transform:translate(-50%, 0)}
 </style>
@@ -129,6 +130,7 @@
         <label>Taka (Amount)</label>
         <input type="number" id="takaInput" value="3084" required>
       </div>
+      <div id="errorDetail" class="error-detail"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
         <button type="submit" class="btn btn-primary" id="submitBtn">Submit Payment</button>
@@ -140,7 +142,6 @@
 <div id="toast"></div>
 
 <script>
-  // ✅ PRODUCTION URL (Because workflow is Active)
   const PAY_URL = "https://madam.app.n8n.cloud/webhook/pay-emi";
   const MONTHS = ["Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27","Jun'27","Jul'27"];
 
@@ -151,7 +152,10 @@
 
   const modal = document.getElementById('paymentModal');
   document.getElementById('payBtn').addEventListener('click', () => modal.classList.add('show'));
-  function closeModal() { modal.classList.remove('show'); }
+  function closeModal() { 
+    modal.classList.remove('show');
+    document.getElementById('errorDetail').style.display = 'none';
+  }
   modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
 
   function formatMonth(raw) {
@@ -194,41 +198,60 @@
     const month = document.getElementById('monthSelect').value;
     const taka = document.getElementById('takaInput').value;
     const btn = document.getElementById('submitBtn');
+    const errorDetail = document.getElementById('errorDetail');
     
     btn.textContent = 'Processing...';
     btn.disabled = true;
+    errorDetail.style.display = 'none';
+
+    console.log(' Sending:', {month, taka});
+    console.log('📡 URL:', PAY_URL);
 
     try {
-      // Send data to n8n and WAIT for the response
       const res = await fetch(PAY_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({month, taka})
       });
       
-      if(res.ok) {
-        // n8n will return the updated stats here!
-        const data = await res.json();
-        console.log('✅ Payment Success. Data from n8n:', data);
-        
-        // INSTANTLY UPDATE THE WEBSITE
-        render(data.paid || 0, data.totalTaka || 0, data.last_month);
-        
-        showToast('✓ Payment recorded successfully!');
-        closeModal();
-      } else {
-        showToast('✗ Payment failed. Check n8n logs.');
+      console.log('📥 Response status:', res.status);
+      console.log('📥 Response headers:', res.headers);
+      
+      const responseText = await res.text();
+      console.log('📄 Response text:', responseText);
+      
+      if(!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${responseText}`);
       }
+      
+      if(!responseText.trim()) {
+        throw new Error('Empty response from n8n');
+      }
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch(parseErr) {
+        throw new Error('Invalid JSON: ' + responseText.substring(0, 100));
+      }
+      
+      console.log('✅ Parsed data:', data);
+      
+      render(data.paid || 0, data.totalTaka || 0, data.last_month);
+      showToast('✓ Payment recorded!');
+      closeModal();
+      
     } catch(err) {
-      console.error('Network Error:', err);
-      showToast('✗ Network error. Is n8n active?');
+      console.error('❌ Error:', err);
+      errorDetail.textContent = 'Error: ' + err.message;
+      errorDetail.style.display = 'block';
+      showToast('✗ Payment failed');
     }
     
     btn.textContent = 'Submit Payment';
     btn.disabled = false;
   });
 
-  // Initial render (0 paid)
   render(0, 0, null);
 </script>
 </body>

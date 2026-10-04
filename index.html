@@ -83,12 +83,12 @@
     filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
   }
   /* 3D Positioning */
-  .front  { transform: translateZ(100px); }
-  .back   { transform: rotateY(180deg) translateZ(100px); }
-  .right  { transform: rotateY(90deg) translateZ(100px); }
-  .left   { transform: rotateY(-90deg) translateZ(100px); }
-  .top    { transform: rotateX(90deg) translateZ(100px); }
-  .bottom { transform: rotateX(-90deg) translateZ(100px); }
+  .face.front  { transform: translateZ(100px); }
+  .face.back   { transform: rotateY(180deg) translateZ(100px); }
+  .face.right  { transform: rotateY(90deg) translateZ(100px); }
+  .face.left   { transform: rotateY(-90deg) translateZ(100px); }
+  .face.top    { transform: rotateX(90deg) translateZ(100px); }
+  .face.bottom { transform: rotateX(-90deg) translateZ(100px); }
 
   @keyframes rotateCube {
     0%   { transform: rotateY(0deg); }
@@ -188,11 +188,7 @@
   const PAY_URL = "https://n8n-56.onrender.com/webhook/pay-emi";
   const STATUS_URL = "https://n8n-56.onrender.com/webhook/emi-status";
   
-  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const now = new Date();
-const val = names[now.getMonth()] + '-' + String(now.getFullYear()).slice(2);
-const sel = document.getElementById('monthSelect');
-if ([...sel.options].some(o => o.value === val)) sel.value = val;
+  const MONTHS = ["Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27","Jun'27","Jul'27"];
 
   // Theme Toggle
   document.getElementById('themeToggle').addEventListener('click', () => {
@@ -202,9 +198,21 @@ if ([...sel.options].some(o => o.value === val)) sel.value = val;
 
   // Modal Logic
   const modal = document.getElementById('paymentModal');
+  // Lock starts on 08 Oct 2026 and repeats every month (open only on days 1-7)
+  const LOCK_START = new Date(2026, 9, 8);
   document.getElementById('payBtn').addEventListener('click', () => {
-    const today = new Date();
-    if (today.getMonth() === 8 && today.getDate() >= 1 && today.getDate() <= 7)
+    const now = new Date();
+    const isOpen = now < LOCK_START || (now.getDate() >= 1 && now.getDate() <= 7);
+    if (!isOpen) {
+      alert("Lock! Open next month");
+      return;
+    }
+    // Auto-select current month in the dropdown
+    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const val = names[now.getMonth()] + '-' + String(now.getFullYear()).slice(2);
+    const sel = document.getElementById('monthSelect');
+    if ([...sel.options].some(o => o.value === val)) sel.value = val;
+    modal.classList.add('show');
   });
   function closeModal() { 
     modal.classList.remove('show');

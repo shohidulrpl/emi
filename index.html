@@ -188,7 +188,11 @@
   const PAY_URL = "https://n8n-56.onrender.com/webhook/pay-emi";
   const STATUS_URL = "https://n8n-56.onrender.com/webhook/emi-status";
   
-  const MONTHS = ["Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27","Jun'27","Jul'27"];
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const now = new Date();
+const val = names[now.getMonth()] + '-' + String(now.getFullYear()).slice(2);
+const sel = document.getElementById('monthSelect');
+if ([...sel.options].some(o => o.value === val)) sel.value = val;
 
   // Theme Toggle
   document.getElementById('themeToggle').addEventListener('click', () => {
@@ -200,12 +204,7 @@
   const modal = document.getElementById('paymentModal');
   document.getElementById('payBtn').addEventListener('click', () => {
     const today = new Date();
-    // getMonth() === 8 মানে সেপ্টেম্বর মাস এবং getDate() <= 7 মানে ১-৭ তারিখ
-    if (today.getMonth() === 8 && today.getDate() >= 1 && today.getDate() <= 7) {
-      modal.classList.add('show');
-    } else {
-      alert("Lock! Open next month");
-    }
+    if (today.getMonth() === 8 && today.getDate() >= 1 && today.getDate() <= 7)
   });
   function closeModal() { 
     modal.classList.remove('show');
